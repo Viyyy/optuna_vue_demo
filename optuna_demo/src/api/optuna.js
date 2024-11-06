@@ -5,6 +5,11 @@ export function get_studies() {
     return service.get("/studies");
 }
 
+export function get_dimensions(study_name) {
+    console.log("get_dimensions called");
+    return service.get(`/dimensions`, { params: { study_name: study_name } });
+}
+
 export function get_metrics() {
     console.log("get_metrics called");
     return service.get("/metrics");
