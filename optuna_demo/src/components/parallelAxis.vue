@@ -48,6 +48,23 @@ import { ref, reactive, onMounted, watch } from "vue";
 import { get_studies, get_dimensions, get_metrics, get_study_details } from "~/api/optuna";
 import * as echarts from "echarts";
 
+const colormap = [
+    "#0000ff",
+    "#0044cc",
+    "#008899",
+    "#00cc66",
+    "#33cc33",
+    "#66cc00",
+    "#99cc00",
+    "#cccc00",
+    "#e6b800",
+    "#ff9900",
+    "#ff6600",
+    "#ff3300",
+    "#ff0000",
+    "#cc0000",
+    "#990000"
+];
 const studies = reactive({ data: [] });
 const selectedStudy = ref("");
 const metrics = reactive({ data: [] });
@@ -80,6 +97,8 @@ function fetchStudy() {
 function fetchDimensions(studyName) {
     get_dimensions(studyName).then(data => {
         dimensions.data = data.data.data;
+    }).finally(() => {
+        handleCheckAll(true);
     });
 }
 
@@ -132,7 +151,7 @@ function setChart() {
             max: maxValue.value,
             dimension: chartAxises.value[chartAxises.value.length - 1].dim,
             inRange: {
-                color: ["#d94e5d", "#eac736", "#50a3ba"].reverse(),
+                color: colormap,
             },
             orient: "vertical",
             left: "right",
@@ -142,7 +161,7 @@ function setChart() {
             formatter: function (p) {
                 // 如果是float，保留4位
                 try {
-                    return parseFloat(p).toFixed(4);
+                    return `${selectedMetric.value}: ${parseFloat(p).toFixed(4)}`;
                 } catch (error) {
                     return ''; // 返回空字符串以隐藏数值
                 }
