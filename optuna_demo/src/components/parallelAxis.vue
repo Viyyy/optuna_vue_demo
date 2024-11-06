@@ -127,7 +127,7 @@ function setChart() {
         visualMap: {
             show: true,
             text: [maxValue.value, minValue.value],
-            realtime: false,
+            // realtime: false,
             min: minValue.value,
             max: maxValue.value,
             dimension: chartAxises.value[chartAxises.value.length - 1].dim,
@@ -139,6 +139,14 @@ function setChart() {
             top: "center",
             itemHeight: "480px",
             itemWidth: 20,
+            formatter: function (p) {
+                // 如果是float，保留4位
+                try {
+                    return parseFloat(p).toFixed(4);
+                } catch (error) {
+                    return ''; // 返回空字符串以隐藏数值
+                }
+            }
         },
         parallelAxis: parallelAxis,
         parallel: {
