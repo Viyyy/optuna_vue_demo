@@ -23,12 +23,20 @@
                         :value="dimension.dim"></el-option>
                 </el-select>
 
-                <el-select v-model="selectedMetric" placeholder="Select a metric">
+                <el-select v-model="selectedMetric" placeholder="Select a metric" style="min-width:140px;">
                     <template #prefix>
                         <label>Metric ·</label>
                     </template>
                     <el-option v-for="metric in metrics.data" :key="metric" :label="metric" :value="metric"></el-option>
                 </el-select>
+
+
+                <el-tooltip :content="'Keep the range of the selected metric'" placement="top">
+                    <el-switch v-model="keepRange" 
+                    inline-prompt
+                        style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949; font-weight: bold;"
+                        active-text="Fixed" inactive-text="Dynamic" />
+                </el-tooltip>
 
                 <el-button type="primary" @click="drawChart">Draw</el-button>
             </el-header>
@@ -36,8 +44,8 @@
             <el-main class="main">
                 <div ref="chart" id="chart" v-loading="loading"></div>
                 <el-slider :display="minValue !== null && maxValue !== null" v-model="sliderValue" vertical range
-                    :show-input="true" :min="minValue" :max="maxValue" :step="0.001" height="480px"
-                    @change="updateValues" />
+                    :show-input="true" :min="minValue" :max="maxValue" :step="0.0001" height="480px"
+                    @change="handlerSlider" />
             </el-main>
         </el-container>
     </div>
@@ -72,6 +80,7 @@ const selectedMetric = ref("");
 const minValue = ref(null);
 const maxValue = ref(null);
 const sliderValue = ref([null, null]);
+let myChart;
 const chart = ref(null);
 const chartData = ref([]);
 const chartAxises = ref([]);
@@ -80,6 +89,9 @@ const selectedDimensions = ref([]);
 const checkAll = ref(false);
 const indeterminate = ref(false);
 const loading = ref(false);
+const keepRange = ref(true);
+
+
 
 function handleCheckAll(value) {
     selectedDimensions.value = value ? dimensions.data.map(d => d.dim) : [];
@@ -122,10 +134,19 @@ function setChart() {
         .filter(axis => selectedDimensions.value.includes(axis.dim) || axis.dim === chartAxises.value.length - 1)
         .sort((a, b) => a.dim - b.dim);
 
-    if (minValue.value === null || maxValue.value === null) {
-        minValue.value = parallelAxis[parallelAxis.length - 1].min;
-        maxValue.value = parallelAxis[parallelAxis.length - 1].max;
-        sliderValue.value = [minValue.value, maxValue.value];
+    if (keepRange.value) {
+        if (!rangeInitialized()) {
+            updateRange(parallelAxis[parallelAxis.length - 1].min, parallelAxis[parallelAxis.length - 1].max);
+        }
+        if (!sliderInitialized()) {
+            updateSlider(parallelAxis[parallelAxis.length - 1].min, parallelAxis[parallelAxis.length - 1].max);
+        }
+    }
+    else {
+        updateRange(parallelAxis[parallelAxis.length - 1].min, parallelAxis[parallelAxis.length - 1].max);
+        if (!sliderInitialized()) {
+            updateSlider(parallelAxis[parallelAxis.length - 1].min, parallelAxis[parallelAxis.length - 1].max);
+        }
     }
 
     const drawData = chartData.value.filter(item => item[item.length - 1] < maxValue.value && item[item.length - 1] > minValue.value);
@@ -198,15 +219,36 @@ function setChart() {
     myChart.setOption(option);
 }
 
-function updateValues([min, max]) {
+function updateSlider(sliderMin, sliderMax) {
+    sliderValue.value = [sliderMin, sliderMax];
+}
+
+function rangeInitialized() {
+    return !(minValue.value === null || maxValue.value === null)
+}
+
+function sliderInitialized() {
+    return !sliderValue.value.includes(null)
+}
+
+function updateRange(min, max) {
+    minValue.value = min;
+    maxValue.value = max;
+}
+
+function clearRange() {
+    updateRange(null, null);
+    updateSlider(null, null);
+}
+
+function handlerSlider([min, max]) {
     drawChart();
 }
 
-let myChart;
+
 function drawChart() {
     loading.value = true;
-
-    get_study_details(selectedStudy.value, selectedMetric.value, sliderValue.value[0], sliderValue.value[1])
+    get_study_details(selectedStudy.value, selectedMetric.value, sliderValue.value[0], sliderValue.value[1], keepRange.value)
         .then(data => {
             chartData.value = data.data.datas;
             chartAxises.value = data.data.axis;
@@ -218,8 +260,7 @@ function drawChart() {
 }
 
 watch(selectedStudy, () => {
-    minValue.value = null;
-    maxValue.value = null;
+    clearRange();
     fetchDimensions(selectedStudy.value);
 });
 
@@ -230,9 +271,14 @@ watch(selectedDimensions, () => {
 });
 
 watch(selectedMetric, () => {
-    minValue.value = null;
-    maxValue.value = null;
-    sliderValue.value = [null, null];
+    clearRange();
+});
+
+watch(keepRange, (newVal, oldVal) => {
+    if (newVal && !oldVal) { // 切换到固定范围
+        clearRange();
+    }
+    drawChart();
 });
 
 onMounted(() => {
@@ -287,6 +333,11 @@ label {
     right: 33px;
     position: absolute;
     z-index: 999;
+}
+
+.el-switch {
+    /* margin-top: 8px !important; */
+    margin-left: 10px;
 }
 
 #chart {

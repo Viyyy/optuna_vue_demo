@@ -15,10 +15,10 @@ export function get_metrics() {
     return service.get("/metrics");
 }
 
-export function get_study_details(study_name, metric = 'accuracy', min = 0.0, max = 1.0) {
+export function get_study_details(study_name, metric = 'accuracy', min = 0.0, max = 1.0, keep_range = true) {
     console.log("get_study_details called");
     return service.get(`/study/${study_name}`,
         {
-            params: { metric: metric, min: min, max: max }
+            params: { metric: metric, min: min, max: max, keep_range: keep_range}
         });
 }
