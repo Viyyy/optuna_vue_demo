@@ -10,7 +10,7 @@
                 </el-select>
 
                 <el-select v-model="selectedDimensions" placeholder="Select Params" multiple clearable collapse-tags
-                    :max-collapse-tags="1">
+                    :max-collapse-tags="1" style="max-width: 230px;">
                     <template #prefix>
                         <label>Params ·</label>
                     </template>
@@ -23,7 +23,7 @@
                         :value="dimension.dim"></el-option>
                 </el-select>
 
-                <el-select v-model="selectedMetric" placeholder="Select a metric" style="min-width:140px;">
+                <el-select v-model="selectedMetric" placeholder="Select a metric" style="max-width: 170px;">
                     <template #prefix>
                         <label>Metric ·</label>
                     </template>
@@ -32,8 +32,7 @@
 
 
                 <el-tooltip :content="'Keep the range of the selected metric'" placement="top">
-                    <el-switch v-model="keepRange" 
-                    inline-prompt
+                    <el-switch v-model="keepRange" inline-prompt
                         style="--el-switch-on-color: #13ce66; --el-switch-off-color: #ff4949; font-weight: bold;"
                         active-text="Fixed" inactive-text="Dynamic" />
                 </el-tooltip>
@@ -55,6 +54,7 @@
 import { ref, reactive, onMounted, watch } from "vue";
 import { get_studies, get_dimensions, get_metrics, get_study_details } from "~/api/optuna";
 import * as echarts from "echarts";
+import { toast } from "~/utils/common"
 
 const colormap = [
     "#0000ff",
@@ -248,20 +248,40 @@ function handlerSlider([min, max]) {
 
 function drawChart() {
     loading.value = true;
-    get_study_details(selectedStudy.value, selectedMetric.value, sliderValue.value[0], sliderValue.value[1], keepRange.value)
-        .then(data => {
-            chartData.value = data.data.datas;
-            chartAxises.value = data.data.axis;
-            setChart();
-        })
-        .finally(() => {
-            loading.value = false;
-        });
+    if (selectedStudy.value === "" || selectedStudy.value === null) {
+        toast("Please select a study", "warning");
+        loading.value = false;
+        return;
+    }
+    if (selectedMetric.value === null || selectedMetric.value === "") {
+        toast("Please select a metric", "warning");
+        loading.value = false;
+        return;
+    }
+    if (selectedDimensions.value.length === 0) {
+        toast("Please select at least one parameter", "warning");
+        loading.value = false;
+        return;
+    }
+    get_study_details(selectedStudy.value, selectedMetric.value, selectedDimensions.value).then(data => {
+        chartData.value = data.data.data;
+        chartAxises.value = data.data.axises;
+        get_study_details(selectedStudy.value, selectedMetric.value, sliderValue.value[0], sliderValue.value[1], keepRange.value)
+            .then(data => {
+                chartData.value = data.data.datas;
+                chartAxises.value = data.data.axis;
+                setChart();
+            })
+            .finally(() => {
+                loading.value = false;
+            });
+    });
 }
 
 watch(selectedStudy, () => {
     clearRange();
     fetchDimensions(selectedStudy.value);
+    selectedMetric.value = null;
 });
 
 watch(selectedDimensions, () => {
