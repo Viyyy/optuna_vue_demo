@@ -10,7 +10,7 @@
                 </el-select>
 
                 <el-select v-model="selectedDimensions" placeholder="Select Params" multiple clearable collapse-tags
-                    :max-collapse-tags="1" style="max-width: 230px;">
+                    :max-collapse-tags="1" style="max-width: 230px;" :disabled="dimensions.data.length === 0">
                     <template #prefix>
                         <label>Params ·</label>
                     </template>
