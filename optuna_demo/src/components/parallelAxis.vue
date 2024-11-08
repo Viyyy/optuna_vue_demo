@@ -120,15 +120,26 @@ function fetchMetric() {
     });
 }
 
+function clearChart() {
+    try {
+        myChart.clear();
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+function clearData() {
+    chartData.value = [];
+    chartAxises.value = [];
+}
+
 function setChart() {
     if (!chartAxises.value.length || !selectedDimensions.value.length) {
         console.log("chartAxises or selectedDimensions is empty");
         return;
     }
 
-    if (myChart) {
-        myChart.clear();
-    }
+    clearChart();
 
     const parallelAxis = chartAxises.value
         .filter(axis => selectedDimensions.value.includes(axis.dim) || axis.dim === chartAxises.value.length - 1)
@@ -279,9 +290,10 @@ function drawChart() {
 }
 
 watch(selectedStudy, () => {
-    clearRange();
     fetchDimensions(selectedStudy.value);
     selectedMetric.value = null;
+    clearData();
+    clearChart();
 });
 
 watch(selectedDimensions, () => {
