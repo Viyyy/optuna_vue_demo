@@ -164,7 +164,7 @@ function setChart() {
 
     const option = {
         title: {
-            text: `${selectedStudy.value} - ${selectedMetric.value}`,
+            text: `【${selectedStudy.value}】 - ${drawData.length} Tasks - ${selectedMetric.value}`,
             left: "center",
         },
         tooltip: {
@@ -211,6 +211,7 @@ function setChart() {
         series: [
             {
                 type: "parallel",
+                smooth: true,
                 lineStyle: {
                     width: 1.5,
                     opacity: 0.5,
