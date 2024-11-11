@@ -5,14 +5,19 @@ export function get_studies() {
     return service.get("/studies");
 }
 
+export function get_tasks(study_name) {
+    console.log("get_tasks called");
+    return service.get(`/tasks`, { params: { study_name: study_name } });
+}
+
 export function get_dimensions(study_name) {
     console.log("get_dimensions called");
     return service.get(`/dimensions`, { params: { study_name: study_name } });
 }
 
-export function get_metrics() {
+export function get_metrics(has_duration = false) {
     console.log("get_metrics called");
-    return service.get("/metrics");
+    return service.get("/metrics", { params: { has_duration: has_duration } });
 }
 
 export function get_study_details(study_name, metric = 'accuracy', min = 0.0, max = 1.0, keep_range = true) {

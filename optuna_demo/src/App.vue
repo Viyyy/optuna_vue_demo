@@ -1,12 +1,43 @@
 <script setup>
+import { ref, onMounted, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import 'element-plus/dist/index.css';
+import { Menu, TrendCharts } from '@element-plus/icons-vue';
 
-import ParallelAxis from './components/parallelAxis.vue'
+const router = useRouter();
+const route = useRoute();
+
+function handleTabClick(tab) {
+  router.push(tab.props.name);
+}
+
 </script>
 
 <template>
-  <ParallelAxis style="width:900px"/>
+  <el-tabs v-model="route.fullPath" @tab-click="handleTabClick" type="border-card">
+    <el-tab-pane name="/plot">
+      <template #label>
+        <span>
+          <el-icon>
+            <TrendCharts />
+          </el-icon>
+          <span> Tasks</span>
+        </span>
+      </template>
+    </el-tab-pane>
+
+    <el-tab-pane name="/parallel-axis">
+      <template #label>
+        <span>
+          <el-icon>
+            <Menu />
+          </el-icon>
+          <span> Sweeps</span>
+        </span>
+      </template>
+    </el-tab-pane>
+  </el-tabs>
+  <router-view />
 </template>
 
-<style scoped>
-
-</style>
+<style scoped></style>

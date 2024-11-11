@@ -2,7 +2,7 @@
     <div class="common-layout">
         <el-container>
             <el-header class="header">
-                <el-select v-model="selectedStudy" placeholder="Select a Study">
+                <el-select v-model="selectedStudy" placeholder="Select a Study" style="max-width: 350px;">
                     <template #prefix>
                         <label>Study ·</label>
                     </template>
@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from "vue";
+import { ref, reactive, onMounted, watch, onUnmounted } from "vue";
 import { get_studies, get_dimensions, get_metrics, get_study_details } from "~/api/optuna";
 import * as echarts from "echarts";
 import { toast } from "~/utils/common"
@@ -103,6 +103,8 @@ function handleCheckAll(value) {
 function fetchStudy() {
     get_studies().then(data => {
         studies.data = data.data.studies;
+        selectedStudy.value = data.data.studies[0];
+        fetchDimensions(selectedStudy.value);
     });
 }
 
@@ -116,7 +118,8 @@ function fetchDimensions(studyName) {
 
 function fetchMetric() {
     get_metrics().then(data => {
-        metrics.data = data.data.data;
+        metrics.data = data.data.metrics;
+        selectedMetric.value = data.data.metrics[0];
     });
 }
 
@@ -301,6 +304,9 @@ watch(selectedDimensions, () => {
     if (chartAxises.value.length && selectedDimensions.value.length) {
         setChart();
     }
+    else {
+        drawChart();
+    }
 });
 
 watch(selectedMetric, () => {
@@ -314,10 +320,15 @@ watch(keepRange, (newVal, oldVal) => {
     drawChart();
 });
 
+
 onMounted(() => {
     myChart = echarts.init(chart.value);
     fetchStudy();
     fetchMetric();
+});
+
+onUnmounted(() => {
+    clearChart();
 });
 
 document.addEventListener("keydown", event => {
@@ -341,14 +352,14 @@ label {
 .header {
     height: 50px;
     display: flex;
-    justify-content: space-between;
+    justify-content:left;
     align-items: center;
 }
 
 .main {
     height: 650px;
     position: relative;
-    width: 100%;
+    width: calc(100% - 20px);
     border: 1px solid #3b2e2e;
     border-radius: 5px;
     padding: 3%;
