@@ -1,15 +1,15 @@
 <template>
     <div class="audio-uploader"> 
         <label 
-            :title="audioFile ? audioFile.name : '请选择音频文件: '"
+            :title="audioFile ? audioFile.name : '选择音频: '"
             style="font-size: 12px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-            {{ audioFile ? audioFile.name : '请选择音频文件: ' }}
+            {{ audioFile ? audioFile.name : '选择音频: ' }}
         </label>
         <audio :src="audioUrl" controls style="height:40px; width:300px;"></audio>
         <el-upload action="" :before-upload="beforeUpload" :show-file-list="false" accept="audio/*">
             <el-button type="primary" :disabled="isRecording">
                 <el-icon><UploadFilled /></el-icon>
-                Upload
+                <!-- Upload -->
             </el-button>
         </el-upload>
         <el-button 

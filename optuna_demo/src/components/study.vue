@@ -321,9 +321,6 @@ window.handleDrawer = (task_id) => {
     }).finally(() => {
         drawer.value = true;
     });
-
-
-    console.log(task_id);
 }
 
 
