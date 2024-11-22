@@ -4,8 +4,12 @@ export function get_studies() {
     return service.get("/analysor/studies");
 }
 
-export function get_tasks(study_id) {
-    return service.get(`/analysor/tasks/${study_id}`);
+export function get_tasks(study_id=null) {
+    return service.get(`/analysor/tasks`, {
+        params: {
+            study_id: study_id
+        }
+    });
 }
 
 export function get_metrics(has_duration=false, ids=null) {
@@ -21,8 +25,8 @@ export function create_studies() {
     return service.post("/analysor/create_studies");
 }
 
-export function get_hyperparams(study_id) {
-    return service.get(`/analysor/hyperparams/${study_id}`);
+export function get_hyperparams(study_id, start_dim=1) {
+    return service.get(`/analysor/hyperparams/${study_id}`, {params: {start_dim: start_dim}});
 }
 
 export function get_best_logs(study_id, metric_ids) {

@@ -11,20 +11,27 @@ function handleTabClick(tab) {
   router.push(tab.props.name);
 }
 
+onMounted(() => {
+  if (route.fullPath === '/') {
+    router.push('/tasks');
+  }
+});
+
 </script>
 
 <template>
   <el-tabs v-model="route.fullPath" @tab-click="handleTabClick" type="border-card">
-    <el-tab-pane name="/study">
+    <el-tab-pane name="/predictor">
       <template #label>
         <span>
-          <el-icon><DataLine /></el-icon>
-          <span> Study</span>
+          <el-icon>
+            <TrendCharts />
+          </el-icon>
+          <span> Predictor</span>
         </span>
       </template>
     </el-tab-pane>
-
-    <el-tab-pane name="/plot">
+    <el-tab-pane name="/tasks">
       <template #label>
         <span>
           <el-icon>
@@ -34,17 +41,17 @@ function handleTabClick(tab) {
         </span>
       </template>
     </el-tab-pane>
-
-    <el-tab-pane name="/parallel-axis">
+    <el-tab-pane name="/study">
       <template #label>
         <span>
           <el-icon>
-            <Menu />
+            <DataLine />
           </el-icon>
-          <span> Sweeps</span>
+          <span> Study</span>
         </span>
       </template>
     </el-tab-pane>
+
   </el-tabs>
   <router-view />
 </template>

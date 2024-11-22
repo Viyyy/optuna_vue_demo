@@ -22,7 +22,6 @@
                     <el-option v-for="param in hyperparams.data" :key="param.dim" :label="param.name"
                         :value="param.dim"></el-option>
                 </el-select>
-
                 <el-select v-model="selectedMetric" placeholder="Select a metric" style="max-width: 170px;">
                     <template #prefix>
                         <label>Metric ·</label>
@@ -48,6 +47,19 @@
             </el-main>
         </el-container>
     </div>
+    <el-drawer v-model="drawer" :title="activeDrawer.title" size="700px">
+        <div>
+            <div class="header">
+                <AudioUploader @audio-uploaded="handleUpload" />
+                <el-button type="primary" @click="handlePredict">
+                    <el-icon><Finished /></el-icon>
+                    Predict
+                </el-button>
+            </div>
+        
+            <PredictResult :audioFile="audioFile" ref="resultComponent" />
+        </div>
+    </el-drawer>
 </template>
 
 <script setup>
@@ -55,6 +67,10 @@ import { ref, reactive, onMounted, watch } from "vue";
 import { get_studies, get_tasks, get_metrics, get_hyperparams, get_best_logs } from "../api/analysor";
 import * as echarts from "echarts";
 import { toast } from "~/utils/common"
+import AudioUploader from '~/components/audioUploader.vue';
+import PredictResult from '~/components/predictResult.vue';
+import { createPredictor } from '~/api/predictor';
+import { Finished } from '@element-plus/icons-vue';
 
 const colormap = ["#0000ff", "#0044cc", "#008899", "#00cc66", "#33cc33", "#66cc00", "#99cc00", "#cccc00", "#e6b800", "#ff9900", "#ff6600", "#ff3300", "#ff0000", "#cc0000", "#990000"];
 
@@ -74,6 +90,22 @@ const checkAll = ref(false);
 const indeterminate = ref(false);
 const loading = ref(false);
 const keepRange = ref(true);
+const drawer = ref(false);
+const activeDrawer = reactive({ task_id: null, title: null })
+const audioFile = ref(null);
+const taskId = ref(null);
+const resultComponent = ref(null);
+const handleUpload = (url, file) => {
+    audioFile.value = file;
+    toast('Upload successful');
+};
+  
+const handlePredict = async () => {
+    createPredictor(taskId.value).then(response => {
+    const predictor_id = response.data.predictor_id;
+    resultComponent.value.predictAudio(predictor_id);
+    });
+};
 
 function handleCheckAll(value) {
     selectedParams.value = value ? hyperparams.data.map(d => d.dim) : [];
@@ -108,12 +140,11 @@ function fetchStudies() {
     get_studies().then(response => {
         studies.data = response.data;
         selectedStudy.value = response.data[0]?.id;
-        fetchStudyParams(selectedStudy.value);
     });
 }
 
 function fetchStudyParams(study_id) {
-    get_hyperparams(study_id).then(response => {
+    get_hyperparams(study_id, 2).then(response => {
         hyperparams.data = response.data;
         handleCheckAll(true);
     });
@@ -156,24 +187,25 @@ function prepareChartData(taskData, logData) {
     }
 
 
-    const axisData = [
-        { dim: 0, name: "Task", type: "category" },
+    let axisData = [
+        { dim: 0, name: "ID", type: "category" },
+        { dim: 1, name: "Task", type: "category" },
         ...hyperparams.data,
-        {
-            dim: hyperparams.data.length + 1,
-            name: metrics.data.find(m => m.id === selectedMetric.value).name,
-            type: "value",
-            min: keepRange.value ? min : sliderValue.value[0],
-            max: keepRange.value ? max : sliderValue.value[1]
-        }
     ];
+    axisData.push({
+        dim: axisData.length,
+        name: metrics.data.find(m => m.id === selectedMetric.value).name,
+        type: "value",
+        min: keepRange.value ? min : sliderValue.value[0],
+        max: keepRange.value ? max : sliderValue.value[1]
+    });
 
 
     var logDataFiltered = logData.filter(item => item.value >= sliderValue.value[0] && item.value <= sliderValue.value[1]);
     var taskDataFiltered = taskData.filter(item => logDataFiltered.some(log => log.task_id === item.id));
     const chartData = taskDataFiltered.map(task => {
         const log = logDataFiltered.find(item => item.task_id === task.id);
-        return [task.name, ...hyperparams.data.map(p => task.hyper_params[p.name]), log.value];
+        return [task.id, task.name, ...hyperparams.data.map(p => task.hyper_params[p.name]), log.value];
     });
 
     return { axisData, chartData };
@@ -200,7 +232,28 @@ function loadChart(axisData, chartData) {
         },
         tooltip: {
             trigger: "item",
-            formatter: params => axisData.map(a => `<b>${a.name}</b>: ${params.value[a.dim]}`).join("<br>"),
+            formatter: params => {
+                const details = axisData.map(a => {
+                    const value = params.value[a.dim];
+                    const formattedValue = (typeof value === 'number' && !Number.isInteger(value)) ? value.toFixed(5) : value;
+                    return `<b>· ${a.name}</b>: ${formattedValue}`;
+                }).join("<br>");
+                return `
+                    <div style="display: block; margin-bottom: 5px;">
+                        ${details}
+                    </div>
+                    <hr style="margin: 5px 0; border: 1.5px solid #ccc;" />
+                    <div style="display: flex; justify-content: center;">
+                        <button 
+                            style=" color: #fff; background-color: #409eff; border: 1px solid #409eff; border-radius: 4px; padding: 5px 10px 5px 10px; font-size: 13px; cursor: pointer;" 
+                            :disabled="drawer.value"
+                            onclick="handleDrawer('${params.value[0]}')">Predict</button>
+                    </div>
+                `;
+            },
+            enterable: true,
+            transitionDuration: 0.4,
+            hideDelay: 1000
         },
         visualMap: {
             show: true,
@@ -212,7 +265,7 @@ function loadChart(axisData, chartData) {
             left: "right",
             top: "center",
             itemHeight: "480px",
-            formatter: p => `${selectedMetric.value}: ${parseFloat(p).toFixed(4)}`,
+            formatter: p => `${metrics.data.find(m => m.id === selectedMetric.value).name}: ${parseFloat(p).toFixed(4)}`,
         },
         parallelAxis: axis,
         parallel: {
@@ -236,7 +289,7 @@ function loadChart(axisData, chartData) {
 }
 
 function drawChart() {
-    
+
     if (selectedStudy.value === "" || selectedStudy.value === null) {
         toast("Please select a study", "warning");
         return;
@@ -252,6 +305,27 @@ function drawChart() {
     loading.value = true;
     fetchChartData();
 }
+
+window.handleDrawer = (task_id) => {
+
+
+    get_tasks(selectedStudy.value).then(response => {
+        const tasks = response.data;        
+        const task_name = tasks.find(t => t.id == task_id).name;
+        taskId.value = parseInt(task_id);
+        activeDrawer.task_id = task_id;
+        activeDrawer.title = `Prediction for Task: ${task_name}`;
+        if (resultComponent.value) {
+            resultComponent.value.clearChart();
+        }
+    }).finally(() => {
+        drawer.value = true;
+    });
+
+
+    console.log(task_id);
+}
+
 
 watch(selectedParams, () => {
     drawChart();
@@ -276,11 +350,30 @@ watch(selectedStudy, () => {
     clearRange();
 });
 
+watch(audioFile, (newVal, oldVal) => {
+    if (!newVal) {
+        resultComponent.value.clearChart();
+    }
+    else {
+        handlePredict();
+    }
+  })
+
+// watch(taskId, () => {
+//     resultComponent.value.clearChart();
+// })
+
 onMounted(() => {
     myChart = echarts.init(chart.value);
     fetchStudies();
-    fetchMetrics();
 });
+
+document.addEventListener("keydown", event => {
+    if (event.code === "Enter" || event.code === "NumpadEnter") {
+        drawChart();
+    }
+});
+
 </script>
 
 <style scoped>
@@ -292,6 +385,13 @@ label {
 
 .el-button {
     margin-left: 10px !important;
+}
+
+.btn-predict {
+    margin-left: 10px;
+    color: #fff !important;
+    font-weight: bold;
+    border: 1px solid #3b2e2e !important;
 }
 
 .header {
