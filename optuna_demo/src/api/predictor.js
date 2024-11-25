@@ -20,3 +20,6 @@ export function doPredict(predictor_id, formData) {
         }
     })
 }
+export function getTaskInfo(task_id) {
+    return service.get(`/analysor/getTaskInfo`, { params: { task_id } })
+}

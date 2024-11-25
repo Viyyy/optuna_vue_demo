@@ -4,7 +4,7 @@ export function get_studies() {
     return service.get("/analysor/studies");
 }
 
-export function get_tasks(study_id=null) {
+export function get_tasks(study_id = null) {
     return service.get(`/analysor/tasks`, {
         params: {
             study_id: study_id
@@ -12,7 +12,7 @@ export function get_tasks(study_id=null) {
     });
 }
 
-export function get_metrics(has_duration=false, ids=null) {
+export function get_metrics(has_duration = false, ids = null) {
     return service.get("/analysor/metrics", {
         params: {
             has_duration: has_duration,
@@ -25,8 +25,8 @@ export function create_studies() {
     return service.post("/analysor/create_studies");
 }
 
-export function get_hyperparams(study_id, start_dim=1) {
-    return service.get(`/analysor/hyperparams/${study_id}`, {params: {start_dim: start_dim}});
+export function get_hyperparams(study_id, start_dim = 1) {
+    return service.get(`/analysor/hyperparams/${study_id}`, { params: { start_dim: start_dim } });
 }
 
 export function get_best_logs(study_id, metric_ids) {
@@ -37,11 +37,15 @@ export function get_best_logs(study_id, metric_ids) {
     });
 }
 
-export function get_train_logs(task_ids, metric_id){
+export function get_train_logs(task_ids, metric_id) {
     return service.get("/analysor/trainLogs", {
         params: {
             task_ids: task_ids,
             metric_id: metric_id
         }
     });
+}
+
+export function get_task_info(task_id) {
+    return service.get(`/analysor/getTaskInfo`, { params: { task_id } });
 }

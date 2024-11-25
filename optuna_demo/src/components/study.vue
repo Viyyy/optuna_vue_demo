@@ -52,7 +52,7 @@
             <div class="header">
                 <AudioUploader @audio-uploaded="handleUpload" />
                 <el-button type="primary" @click="handlePredict">
-                    <el-icon><Finished /></el-icon>
+                    <el-icon><PieChart /></el-icon>
                     Predict
                 </el-button>
             </div>
@@ -70,7 +70,7 @@ import { toast } from "~/utils/common"
 import AudioUploader from '~/components/audioUploader.vue';
 import PredictResult from '~/components/predictResult.vue';
 import { createPredictor } from '~/api/predictor';
-import { Finished } from '@element-plus/icons-vue';
+import { PieChart } from '@element-plus/icons-vue';
 
 const colormap = ["#0000ff", "#0044cc", "#008899", "#00cc66", "#33cc33", "#66cc00", "#99cc00", "#cccc00", "#e6b800", "#ff9900", "#ff6600", "#ff3300", "#ff0000", "#cc0000", "#990000"];
 
