@@ -15,6 +15,9 @@ onMounted(() => {
   if (route.fullPath === '/') {
     router.push('/study');
   }
+  else {
+    router.push(route.fullPath);
+  }
 });
 
 </script>
